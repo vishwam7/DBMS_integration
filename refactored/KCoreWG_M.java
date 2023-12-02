@@ -212,7 +212,12 @@ public class KCoreWG_M {
 
     public static void main(String[] args) {
         long startTime = System.currentTimeMillis();
-        //String basename = "amazon0601"; // Set the basename directly
+        if(args.length != 1) {
+			System.err.println("Usage: java KCoreWG_M basename");
+			System.exit(1);
+		}
+		
+		String basename = args[0];
 
         System.out.println("Starting " + basename);
         KCoreWG_M kCore = null;
