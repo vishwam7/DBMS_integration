@@ -6,14 +6,238 @@
 
 ## Algorithms
 
-### 1. Batagelj-Zaversnik Algorithm on Webgraph (WG BZ):  
+### 1. Batagelj-Zaversnik Algorithm on Webgraph (WG_BZ):  
 #### The Batagelj-Zaversnik algorithm, implemented on the Webgraph framework, emerges as the most efficient solution among those evaluated in this research. It demonstrates impressive running times, particularly on datasets like UK and TW, completing computations within minutes. However, it necessitates that both graph vertices and edges fit entirely within the available memory, which restricts its applicability for extremely large datasets like TW under various memory budgets.  
 
-### 2. Montresor et. al. Algorithm on Webgraph (WG M):  
+```plaintext
+Start
+│
+├── Load Graph
+│
+├── Compute Basic Graph Properties
+│
+├── Initialize Arrays
+│
+├── Initialize Degree Bins
+│
+├── Sort Vertices by Degree
+│
+├── K-Core Computation Loop
+│   │
+│   ├── Update Vertices and Bins
+│   │
+│   └── Print Progress
+│
+├── End Loop
+│
+├── Output Results
+│
+└── End
+
+```
+### 2. Montresor et. al. Algorithm on Webgraph (WG_M):  
 #### This algorithm, also implemented on the Webgraph framework, stands as the second fastest approach in this study. It exhibits commendable performance, completing computations within minutes for datasets like UK and within a few tens of minutes for TW. Unlike WG BZ, WG M solely necessitates the graph's vertices to fit within memory, which presents a more feasible constraint even for substantial datasets like TW. WG M succeeded in running for all memory budgets considered in the study.
 
-### 3. Montresor et. al. Algorithm on GraphChi (GC M):  
+``` plaintext
+Start
+|
+|----> Load Graph (ImmutableGraph.loadMapped(filename))
+|       |
+|       |----> Initialize Graph Info
+|               |
+|               |----> Calculate Num Edges And Max Degree
+|               |       |
+|               |       |----> Loop over nodes
+|               |               |
+|               |               |----> Update Max Degree
+|               |               |----> Set Node as Scheduled
+|               |               |----> Update Core Number
+|               |               |       |
+|               |               |       |----> On First Iteration
+|               |               |       |       |
+|               |               |       |       |----> Initialize Core Number
+|               |               |       |       |----> Mark Node as Scheduled
+|               |               |       |       |----> Set Has Changed
+|               |               |       |
+|               |               |       |----> On Subsequent Iterations
+|               |               |               |
+|               |               |               |----> Compute Estimated Core
+|               |               |               |----> If Local Estimate < Core Number
+|               |               |               |       |
+|               |               |               |       |----> Update Core Number
+|               |               |               |       |----> Set Has Changed
+|               |               |               |       |----> Update Scheduled Nodes
+|
+|----> Compute K-Core
+|       |
+|       |----> While (Iteration Count < Max Iterations && Not Converged)
+|               |
+|               |----> Loop over Nodes
+|                       |
+|                       |----> If Node Scheduled
+|                               |
+|                               |----> Update Core Number
+|                               |----> Mark Node as Scheduled
+|                               |----> Set Has Changed
+|                       |
+|               |----> Display Scheduled Nodes Percentage
+|               |----> Increment Iteration Count
+|
+|----> Output Core Statistics
+|       |
+|       |----> Compute Max Core
+|       |----> Compute Average Core
+|       |----> Print Core Statistics
+|
+End
+```
+
+### 3. Montresor et. al. Algorithm on GraphChi (GC_M):  
 #### Implemented on the GraphChi framework, this algorithm operates relatively slower compared to the preceding methods. Despite being slower, it stands out for not mandating that vertices or edges fit entirely in memory. GC M trades off speed for the advantage of yielding satisfactory approximate results with fewer iterations, making it a viable alternative when computational resources are limited.  
+
+```plaintext
++-------------------+
+|  Initialization   |
+|                   |
+| vertexValuesUpdated = 0
+| nVertexesScheduled = 0
+| nIterations = 0
++---------|---------+
+          |
+          v
++-------------------+
+| Begin Iteration   |
+|                   |
+| resetIterationVariables()
++---------|---------+
+          |
+          v
++-------------------+
+|  Process Vertices |
+|                   |
+| update(ChiVertex<Integer, Integer> v, GraphChiContext context)
+|   |
+|   +--(iteration==0)--> initializeVertexValue(v, v.numOutEdges(), context)
+|   |
+|   +--(iteration>0)----> updateVertexValue(v, context)
++---------|---------+
+          |
+          v
++-------------------+
+|  Update Vertex    |
+|                   |
+| initializeVertexValue(v, degree, context)
+|   |
+|   +---> v.setValue(degree)
+|   +---> broadcastValueToNeighbors(v, degree)
+|   +---> updateCounters(context)
+|   +---> scheduleVertex(v, context)
+|
+| updateVertexValue(v, context)
+|   |
+|   +---> localEstimate = computeUpperBound(v)
+|   +---> if (localEstimate < v.getValue())
+|   |       +---> updateVertexWithBound(v, localEstimate, context)
++---------|---------+
+          |
+          v
++-------------------+
+|  Update Counters  |
+|                   |
+| updateCounters(context)
+|   |
+|   +---> vertexValuesUpdated++
+|   +---> nVertexesScheduled++
++---------|---------+
+          |
+          v
++-------------------+
+| Broadcast Values  |
+|                   |
+| broadcastValueToNeighbors(v, value)
+|   |
+|   +---> updateOutEdges(vertex, value)
+|         |
+|         +---> iterate over out edges and set value
++---------|---------+
+          |
+          v
++-------------------+
+|  Schedule Vertex  |
+|                   |
+| scheduleVertex(v, context)
+|   |
+|   +---> context.getScheduler().addTask(v.getId())
++---------|---------+
+          |
+          v
++-------------------+
+|  Schedule Updated |
+|  Vertices         |
+|                   |
+| scheduleUpdatedVertices(v, localEstimate, context)
+|   |
+|   +---> iterate over in edges
+|         +---> if (localEstimate <= core_u)
+|               +---> scheduleVertexUpdate(v.inEdge(i).getVertexId(), context)
++-------------------+
+          |
+          v
++-------------------+
+|  Update Vertex    |
+|  With Bound       |
+|                   |
+| updateVertexWithBound(v, localEstimate, context)
+|   |
+|   +---> v.setValue(localEstimate)
+|   +---> broadcastValueToNeighbors(v, localEstimate)
+|   +---> updateCounters(context)
+|   +---> scheduleUpdatedVertices(v, localEstimate, context)
++-------------------+
+          |
+          v
++-------------------+
+|   End Iteration   |
+|                   |
+| printIterationSummary(ctx)
+|   |
+|   +---> printUpdates()
+|   +---> printScheduledVertices()
+|   +---> printIterationEnd(ctx)
+|
+| endIteration(ctx)
+|   |
+|   +---> updateIterations(ctx)
+|         |
+|         +---> nIterations++
+|         +---> checkForNoUpdates(ctx)
+|               |
+|               +---> areUpdatesZero()
+|                     +---> handleNoUpdates(ctx)
+|                           +---> removeAllTasks(ctx)
++-------------------+
+          |
+          v
++-------------------+
+|   GraphChi Engine |
+|   Configuration   |
+|                   |
+| configureEngine(engine)
+|   |
+|   +---> engine.setSkipZeroDegreeVertices(true)
+|   +---> engine.setEnableScheduler(true)
+|   +---> engine.setEdataConverter(new IntConverter())
+|   +---> engine.setVertexDataConverter(new IntConverter())
+|
+| setupGraphChiEngine(engine)
+|
+| executeGraphChi(engine, kCoreGC_M)
+|   |
+|   +---> engine.run(kCoreGC_M, INFINITY)
+|         |
+|         +---> update() and related methods are called
++-------------------+
+```
 
 ## Implementation: 
 ### Dataset link:  
