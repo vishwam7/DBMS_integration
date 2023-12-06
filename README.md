@@ -377,6 +377,7 @@ In summary, the key technical differences are:
 | **Sorting vertices** | Not specified                                  | Sort vertices by degree using bin sort, with D tagging along | Sort vertices by degree using bin sort, with vert and pos tagging along        |
 | **Main algorithm**   | Delete min degree vertex <br> Update neighbors | Scan vertices <br> Update vertices and bins                  | Stream over vertices <br> Update vertices and bins                             |
 | **Time complexity**  | Not analyzed                                   | O(m)                                                         | O(m)                                                                           |
+
 The main differences are:
 
 - KCoreWG_BZ does not maintain the coreness array L, it only computes the degree array deg which contains the coreness at the end
@@ -397,6 +398,7 @@ The main differences are:
 | **Subsequent iterations**      | Computes local estimate using computeEstimatedCore() and updates core number if smaller  | Algorithm 6 updates core number using computeUpperBound()                |
 | **Local estimate computation** | Uses core frequency array, handles differently than paper                                | Algorithm 7 uses c array directly based on neighbors' core numbers       |
 | **Convergence check**          | Checks if hasChanged flag is set each iteration                                          | Checks global change flag                                                |
+
 In summary, the main differences are:
 
 - The KCoreWG_M implementation uses a separate isScheduled array rather than reusing the scheduled array.
